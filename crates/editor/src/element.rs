@@ -3396,7 +3396,12 @@ impl EditorElement {
                 height,
                 ..
             } => {
-                let mut result = v_flex().id(block_id).w_full().pr(editor_margins.right);
+                let mut result = v_flex()
+                    .id(block_id)
+                    .w_full()
+                    .pr(editor_margins.right)
+                    .h(*height as f32 * line_height)
+                    .justify_end();
 
                 if self.should_show_buffer_headers() {
                     let selected = selected_buffer_ids.contains(&first_excerpt.buffer_id());
@@ -3444,7 +3449,11 @@ impl EditorElement {
             }
 
             Block::BufferHeader { excerpt, height } => {
-                let mut result = v_flex().id(block_id).w_full();
+                let mut result = v_flex()
+                    .id(block_id)
+                    .w_full()
+                    .h(*height as f32 * line_height)
+                    .justify_end();
 
                 if self.should_show_buffer_headers() {
                     let jump_data = header::header_jump_data(
@@ -9952,6 +9961,10 @@ impl Element for EditorElement {
                         sticky_buffer_header.is_some() || sticky_header_excerpt_id.is_some();
                     let sticky_header_height = if has_sticky_buffer_header {
                         let full_height = FILE_HEADER_HEIGHT as f32 * line_height;
+                        let header_margin_rows = snapshot
+                            .display_snapshot
+                            .buffer_header_height()
+                            .saturating_sub(FILE_HEADER_HEIGHT);
                         let display_row = blocks
                             .iter()
                             .filter(|block| block.is_buffer_header)
@@ -9960,7 +9973,10 @@ impl Element for EditorElement {
                             });
                         let offset = match display_row {
                             Some(display_row) => {
-                                let max_row = display_row.0.saturating_sub(FILE_HEADER_HEIGHT);
+                                let max_row = display_row
+                                    .0
+                                    .saturating_add(header_margin_rows)
+                                    .saturating_sub(FILE_HEADER_HEIGHT);
                                 let offset = (scroll_position.y - max_row as f64).max(0.0);
                                 let slide_up =
                                     Pixels::from(offset * ScrollPixelOffset::from(line_height));

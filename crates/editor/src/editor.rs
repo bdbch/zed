@@ -299,6 +299,14 @@ use crate::{
 pub const FILE_HEADER_HEIGHT: u32 = 2;
 pub const BUFFER_HEADER_PADDING: Rems = rems(0.25);
 pub const MULTI_BUFFER_EXCERPT_HEADER_HEIGHT: u32 = 1;
+
+fn multibuffer_item_margin_rows(line_height: Pixels, item_margin: f32) -> u32 {
+    if item_margin > 0.0 && line_height > Pixels::ZERO {
+        ((item_margin / f32::from(line_height)).round() as u32).max(1)
+    } else {
+        0
+    }
+}
 const CURSOR_BLINK_INTERVAL: Duration = Duration::from_millis(500);
 const MAX_LINE_LEN: usize = 1024;
 const MIN_NAVIGATION_HISTORY_ROW_DELTA: i64 = 10;
@@ -2056,6 +2064,11 @@ impl Editor {
             merge_adjacent: true,
             ..FoldPlaceholder::default()
         };
+        let buffer_header_margin = multibuffer_item_margin_rows(
+            window.line_height(),
+            EditorSettings::get_global(cx).multibuffer_item_margin,
+        );
+        let display_map_was_provided = display_map.is_some();
         let display_map = display_map.unwrap_or_else(|| {
             cx.new(|cx| {
                 DisplayMap::new(
@@ -2071,6 +2084,11 @@ impl Editor {
                 )
             })
         });
+        if !display_map_was_provided {
+            display_map.update(cx, |display_map, cx| {
+                display_map.set_buffer_header_margin(buffer_header_margin, cx);
+            });
+        }
 
         let selections = SelectionsCollection::new();
 
@@ -10390,6 +10408,14 @@ impl Editor {
             }
             self.cursor_shape = editor_settings.cursor_shape.unwrap_or_default();
         }
+
+        let buffer_header_margin = multibuffer_item_margin_rows(
+            window.line_height(),
+            EditorSettings::get_global(cx).multibuffer_item_margin,
+        );
+        self.display_map.update(cx, |display_map, cx| {
+            display_map.set_buffer_header_margin(buffer_header_margin, cx);
+        });
 
         if old_cursor_shape != self.cursor_shape {
             cx.emit(EditorEvent::CursorShapeChanged);

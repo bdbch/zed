@@ -7,7 +7,8 @@ use serde::{Deserialize, Serialize};
 use settings_macros::{MergeFrom, with_fallible_options};
 
 use crate::{
-    DelayMs, DiagnosticSeverityContent, ShowScrollbar, serialize_f32_with_two_decimal_places,
+    DelayMs, DiagnosticSeverityContent, PixelSetting, ShowScrollbar,
+    serialize_f32_with_two_decimal_places,
 };
 
 #[with_fallible_options]
@@ -145,6 +146,12 @@ pub struct EditorSettingsContent {
     ///
     /// Default: 2
     pub excerpt_context_lines: Option<u32>,
+
+    /// The amount of vertical space, in pixels, between items (files) in a multibuffer.
+    /// The spacing is rounded to the nearest line height.
+    ///
+    /// Default: 0
+    pub multibuffer_item_margin: Option<PixelSetting>,
 
     /// Whether to enable middle-click paste on Linux
     ///

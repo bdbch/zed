@@ -30,6 +30,18 @@ While you can easily edit files in a multibuffer, navigating directly to the sou
 
 Additionally, if you prefer to use the mouse and would like to double-click on an excerpt to open it, you can enable this functionality with the setting: `"double_click_in_multibuffer": "open"`.
 
+## Spacing Between Files
+
+To make it easier to tell where one file ends and the next begins, you can add vertical space between items in a multibuffer. Search for `multibuffer_item_margin` in the Settings Editor, or add this to your settings.json:
+
+```json [settings]
+{
+  "multibuffer_item_margin": 16.0
+}
+```
+
+The value is in pixels and is rounded to the nearest line height. It defaults to `0.0`.
+
 ## Project search
 
 To start a search run the {#action pane::DeploySearch} command (`cmd-shift-f` on macOS, `ctrl-shift-f` on Windows/Linux, or `g/` in Vim mode). After the search has completed, the results will be shown in a new multibuffer. There will be one excerpt for each matching line across the whole project.

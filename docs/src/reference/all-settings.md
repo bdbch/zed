@@ -3597,6 +3597,16 @@ Positive `integer` values, or `0` to disable modeline parsing
 }
 ```
 
+## Multibuffer Item Margin
+
+- Description: The amount of vertical space, in pixels, between items (files) in a multibuffer. The spacing is rounded to the nearest line height.
+- Setting: `multibuffer_item_margin`
+- Default: `0.0`
+
+**Options**
+
+Non-negative `float` values
+
 ## Node
 
 - Description: Configuration for Node.js integration

@@ -197,6 +197,10 @@ impl EditorElement {
             .into_any_element();
 
         let mut origin = hitbox.origin;
+        let header_margin_rows = snapshot
+            .display_snapshot
+            .buffer_header_height()
+            .saturating_sub(FILE_HEADER_HEIGHT);
         // Move floating header up to avoid colliding with the next buffer header.
         for block in blocks.iter() {
             if !block.is_buffer_header {
@@ -207,7 +211,10 @@ impl EditorElement {
                 continue;
             };
 
-            let max_row = display_row.0.saturating_sub(FILE_HEADER_HEIGHT);
+            let max_row = display_row
+                .0
+                .saturating_add(header_margin_rows)
+                .saturating_sub(FILE_HEADER_HEIGHT);
             let offset = scroll_position.y - max_row as f64;
 
             if offset > 0.0 {

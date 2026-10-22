@@ -594,7 +594,11 @@ impl SplitBufferHeadersElement {
                 continue;
             }
 
-            let max_row = block_row.0.saturating_sub(FILE_HEADER_HEIGHT);
+            let margin_rows = block.height().saturating_sub(FILE_HEADER_HEIGHT);
+            let max_row = block_row
+                .0
+                .saturating_add(margin_rows)
+                .saturating_sub(FILE_HEADER_HEIGHT);
             let offset = scroll_position.y - max_row as f64;
 
             if offset > 0.0 {
@@ -664,7 +668,9 @@ impl SplitBufferHeadersElement {
             )
             .into_any_element();
 
-            let y_offset = (block_row.0 as f64 - scroll_position.y) * f64::from(line_height);
+            let margin_rows = block.height().saturating_sub(FILE_HEADER_HEIGHT);
+            let y_offset = (block_row.0.saturating_add(margin_rows) as f64 - scroll_position.y)
+                * f64::from(line_height);
             let origin = point(bounds.origin.x, bounds.origin.y + Pixels::from(y_offset));
 
             let available_size = size(

@@ -1925,7 +1925,7 @@ fn editor_page() -> SettingsPage {
         ]
     }
 
-    fn multibuffer_section() -> [SettingsPageItem; 7] {
+    fn multibuffer_section() -> [SettingsPageItem; 8] {
         [
             SettingsPageItem::SectionHeader("Multibuffer"),
             SettingsPageItem::SettingItem(SettingItem {
@@ -1967,6 +1967,22 @@ fn editor_page() -> SettingsPage {
                     pick: |settings_content| settings_content.editor.excerpt_context_lines.as_ref(),
                     write: |settings_content, value, _| {
                         settings_content.editor.excerpt_context_lines = value;
+                    },
+                }),
+                metadata: None,
+                files: USER,
+            }),
+            SettingsPageItem::SettingItem(SettingItem {
+                title: "Multibuffer Item Margin",
+                description: "The amount of vertical space, in pixels, between items (files) in a multibuffer. The spacing is rounded to the nearest line height.",
+                field: Box::new(SettingField {
+                    organization_override: None,
+                    json_path: Some("multibuffer_item_margin"),
+                    pick: |settings_content| {
+                        settings_content.editor.multibuffer_item_margin.as_ref()
+                    },
+                    write: |settings_content, value, _| {
+                        settings_content.editor.multibuffer_item_margin = value;
                     },
                 }),
                 metadata: None,

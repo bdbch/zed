@@ -42,6 +42,7 @@ pub struct BlockMap {
     custom_blocks_by_id: TreeMap<CustomBlockId, Arc<CustomBlock>>,
     transforms: RefCell<SumTree<Transform>>,
     buffer_header_height: u32,
+    buffer_header_margin: u32,
     excerpt_header_height: u32,
     pub(super) folded_buffers: HashSet<BufferId>,
     buffers_with_disabled_headers: HashSet<BufferId>,
@@ -667,6 +668,7 @@ impl BlockMap {
             transforms: RefCell::new(transforms),
             wrap_snapshot: RefCell::new(wrap_snapshot.clone()),
             buffer_header_height,
+            buffer_header_margin: 0,
             excerpt_header_height,
             deferred_edits: Cell::default(),
         };
@@ -679,6 +681,42 @@ impl BlockMap {
             None,
         );
         map
+    }
+
+    /// Updates the extra display rows inserted before each buffer header (except
+    /// the first) and rewrites the existing header blocks in place so the change
+    /// takes effect without rebuilding the block map (which would discard
+    /// companion spacers).
+    pub(super) fn set_buffer_header_margin(&mut self, margin: u32) {
+        if self.buffer_header_margin == margin {
+            return;
+        }
+        self.buffer_header_margin = margin;
+
+        let total_header_height = self.buffer_header_height + self.buffer_header_margin;
+        let transforms = self.transforms.borrow().clone();
+        let mut new_transforms = SumTree::default();
+        let mut first_header = true;
+        for transform in transforms.iter() {
+            let mut transform = transform.clone();
+            if let Some(block) = transform.block.as_mut() {
+                match block {
+                    Block::BufferHeader { height, .. } | Block::FoldedBuffer { height, .. } => {
+                        *height = if first_header {
+                            first_header = false;
+                            self.buffer_header_height
+                        } else {
+                            total_header_height
+                        };
+                        transform.summary.output_rows = BlockRow(*height);
+                    }
+                    Block::Custom(_) | Block::ExcerptBoundary { .. } | Block::Spacer { .. } => {}
+                }
+            }
+            new_transforms.push(transform, ());
+        }
+
+        *self.transforms.borrow_mut() = new_transforms;
     }
 
     #[ztracing::instrument(skip_all)]
@@ -696,7 +734,7 @@ impl BlockMap {
                 wrap_snapshot,
                 transforms: self.transforms.borrow().clone(),
                 custom_blocks_by_id: self.custom_blocks_by_id.clone(),
-                buffer_header_height: self.buffer_header_height,
+                buffer_header_height: self.buffer_header_height + self.buffer_header_margin,
                 excerpt_header_height: self.excerpt_header_height,
                 buffers_with_disabled_headers: self.buffers_with_disabled_headers.clone(),
             },
@@ -1238,6 +1276,11 @@ impl BlockMap {
                 };
 
                 let mut height = 0;
+                let header_height = if excerpt_boundary.prev.is_none() {
+                    self.buffer_header_height
+                } else {
+                    self.buffer_header_height + self.buffer_header_margin
+                };
 
                 if let Some(new_buffer_id) = new_buffer_id {
                     let first_excerpt = excerpt_boundary.next.clone();
@@ -1267,7 +1310,7 @@ impl BlockMap {
                         return Some((
                             BlockPlacement::Replace(wrap_row..=wrap_end_row),
                             Block::FoldedBuffer {
-                                height: height + self.buffer_header_height,
+                                height: height + header_height,
                                 first_excerpt,
                             },
                         ));
@@ -1276,7 +1319,7 @@ impl BlockMap {
 
                 let starts_new_buffer = new_buffer_id.is_some();
                 let block = if starts_new_buffer && buffer.show_headers() {
-                    height += self.buffer_header_height;
+                    height += header_height;
                     Block::BufferHeader {
                         excerpt: excerpt_boundary.next,
                         height,

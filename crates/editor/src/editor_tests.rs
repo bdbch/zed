@@ -57,8 +57,8 @@ use serde_json::{self, json};
 use settings::{
     AllLanguageSettingsContent, DelayMs, EditorSettingsContent, GlobalLspSettingsContent,
     GoToDefinitionScrollStrategy, IndentGuideBackgroundColoring, IndentGuideColoring,
-    InlayHintSettingsContent, ProjectSettingsContent, ScrollBeyondLastLine, SearchSettingsContent,
-    SettingsContent, SettingsStore,
+    InlayHintSettingsContent, PixelSetting, ProjectSettingsContent, ScrollBeyondLastLine,
+    SearchSettingsContent, SettingsContent, SettingsStore,
 };
 use std::{
     borrow::Cow,
@@ -1199,6 +1199,82 @@ fn test_toggle_breadcrumb_does_not_change_settings(cx: &mut TestAppContext) {
         assert_eq!(
             editor.breadcrumb_location(cx),
             ToolbarItemLocation::PrimaryLeft
+        );
+    });
+}
+
+#[gpui::test]
+fn test_multibuffer_item_margin(cx: &mut TestAppContext) {
+    init_test(cx, |_| {});
+
+    let editor = cx.add_window(|window, cx| {
+        let multi_buffer = MultiBuffer::build_multi(
+            [
+                ("first\nfile\n", vec![Point::row_range(0..2)]),
+                ("second\nfile\n", vec![Point::row_range(0..2)]),
+            ],
+            cx,
+        );
+        build_editor(multi_buffer, window, cx)
+    });
+
+    let header_heights = |editor: &Editor, cx: &mut App| {
+        let snapshot = editor.display_snapshot(cx);
+        let display_snapshot = &snapshot.display_snapshot;
+        display_snapshot
+            .blocks_in_range(DisplayRow(0)..display_snapshot.max_point().row().next_row())
+            .filter_map(|(_, block)| match block {
+                crate::display_map::Block::BufferHeader { height, .. } => Some(*height),
+                _ => None,
+            })
+            .collect::<Vec<_>>()
+    };
+
+    editor.update(cx, |editor, _window, cx| {
+        assert_eq!(
+            editor.display_snapshot(cx).buffer_header_height(),
+            FILE_HEADER_HEIGHT
+        );
+        assert_eq!(
+            header_heights(editor, cx),
+            vec![FILE_HEADER_HEIGHT; 2],
+            "items should have no extra spacing by default"
+        );
+
+    });
+
+    update_test_editor_settings(cx, &|settings| {
+        settings.multibuffer_item_margin = Some(PixelSetting(1.0));
+    });
+    cx.run_until_parked();
+
+    editor.update(cx, |editor, _window, cx| {
+        assert_eq!(
+            editor.display_snapshot(cx).buffer_header_height(),
+            FILE_HEADER_HEIGHT + 1,
+            "a positive margin should add at least one row"
+        );
+        assert_eq!(
+            header_heights(editor, cx),
+            vec![FILE_HEADER_HEIGHT, FILE_HEADER_HEIGHT + 1],
+            "the first item should not receive the margin"
+        );
+    });
+
+    update_test_editor_settings(cx, &|settings| {
+        settings.multibuffer_item_margin = Some(PixelSetting(0.0));
+    });
+    cx.run_until_parked();
+
+    editor.update(cx, |editor, _window, cx| {
+        assert_eq!(
+            editor.display_snapshot(cx).buffer_header_height(),
+            FILE_HEADER_HEIGHT
+        );
+        assert_eq!(
+            header_heights(editor, cx),
+            vec![FILE_HEADER_HEIGHT; 2],
+            "clearing the margin should restore the default spacing"
         );
     });
 }

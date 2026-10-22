@@ -504,6 +504,9 @@
   "expand_excerpt_lines": 5,
   // The default number of context lines shown in multibuffer excerpts.
   "excerpt_context_lines": 2,
+  // The amount of vertical space, in pixels, between items (files) in a multibuffer.
+  // The spacing is rounded to the nearest line height.
+  "multibuffer_item_margin": 0.0,
   // Globs to match against file paths to determine if a file is private.
   "private_files": ["**/.env*", "**/*.pem", "**/*.key", "**/*.cert", "**/*.crt", "**/secrets.yml"],
   // Whether to use additional LSP queries to format (and amend) the code after

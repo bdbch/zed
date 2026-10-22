@@ -287,6 +287,7 @@ impl VsCodeSettings {
             drag_and_drop_selection: None,
             excerpt_context_lines: None,
             expand_excerpt_lines: None,
+            multibuffer_item_margin: None,
             fast_scroll_sensitivity: self.read_f32("editor.fastScrollSensitivity"),
             sticky_scroll: self.sticky_scroll_content(),
             go_to_definition_fallback: None,

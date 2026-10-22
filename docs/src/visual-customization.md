@@ -391,7 +391,10 @@ TBD: Centered layout related settings
   // The default number of lines to expand excerpts in the multibuffer by.
   "expand_excerpt_lines": 5,
   // The default number of lines of context provided for excerpts in the multibuffer by.
-  "excerpt_context_lines": 2
+  "excerpt_context_lines": 2,
+  // The amount of vertical space, in pixels, between items (files) in a multibuffer.
+  // The spacing is rounded to the nearest line height.
+  "multibuffer_item_margin": 0.0
 }
 ```
 

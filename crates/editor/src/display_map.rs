@@ -920,6 +920,12 @@ impl DisplayMap {
     }
 
     #[instrument(skip_all)]
+    pub(crate) fn set_buffer_header_margin(&mut self, margin: u32, cx: &mut Context<Self>) {
+        self.block_map.set_buffer_header_margin(margin);
+        cx.notify();
+    }
+
+    #[instrument(skip_all)]
     pub(crate) fn is_buffer_folded(&self, buffer_id: language::BufferId) -> bool {
         self.block_map.folded_buffers.contains(&buffer_id)
     }
